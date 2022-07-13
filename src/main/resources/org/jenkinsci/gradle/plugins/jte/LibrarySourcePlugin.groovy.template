@@ -1,0 +1,14 @@
+<% if (packageStr) print "package ${packageStr}" %>
+
+import org.boozallen.plugins.jte.init.governance.libs.LibraryProvidingPlugin
+import org.boozallen.plugins.jte.init.governance.libs.LibraryProvidingPlugin.LibraryProvidingPluginDescriptor
+import hudson.Extension
+import org.kohsuke.stapler.DataBoundConstructor
+import org.jenkinsci.Symbol
+
+class LibrarySourcePlugin extends LibraryProvidingPlugin{
+    @DataBoundConstructor LibrarySourcePlugin(){}
+
+    <% if (pluginSymbol) print "@Symbol('${pluginSymbol}')" %>
+    @Extension public static class DescriptorImpl extends LibraryProvidingPluginDescriptor{}
+}
