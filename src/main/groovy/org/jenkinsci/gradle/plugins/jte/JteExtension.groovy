@@ -17,6 +17,8 @@ abstract class JteExtension{
      */
     abstract RegularFileProperty getBaseDirectory()
 
+    static final DEFAULT_BASE_DIRECTORY = "libraries"
+
     /**
      * defines the value provided to the `@Symbol` annotation on the
      * generated plugin class's descriptor. This value is used to
@@ -43,7 +45,7 @@ abstract class JteExtension{
         // register the `jte` block in the build configuration dsl
         def extension = project.extensions.create('jte', JteExtension)
         // set the default value of `jte.baseDirectory` to `libraries`
-        extension.baseDirectory.convention(project.getLayout().getProjectDirectory().file("libraries"))
+        extension.baseDirectory.convention(project.getLayout().getProjectDirectory().file(DEFAULT_BASE_DIRECTORY))
         return extension
     }
 }

@@ -1,40 +1,21 @@
 package org.jenkinsci.gradle.plugins.jte
 
-import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 class FunctionalTestSpec extends Specification {
-    File projectDir
-    File pluginDir
-    GradleRunner jte
-    File buildFile
+
+    TestUtil test
 
     void setup(){
-        projectDir = File.createTempDir()
-        pluginDir = File.createTempDir()
-        jte = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("jte")
-                .withPluginClasspath()
-        buildFile = new File(projectDir, "build.gradle")
-        buildFile << """
-        plugins{
-          id 'org.jenkins-ci.jte'
-        }
-
-        jenkinsPlugin{
-          coreVersion = '2.263.1'
-          shortName = 'my-libraries'
-        }
-        """
+        test = TestUtil.setup()
     }
 
     def "missing libraries directory throws exception"(){
         when:
-        def result = jte.buildAndFail()
+        def result = test.jte.buildAndFail()
         then:
         result.task(":jte").outcome == FAILED
         result.output =~ /baseDirectory .* does not exist/
@@ -42,9 +23,9 @@ class FunctionalTestSpec extends Specification {
 
     def "baseDirectory is not a directory throws exception"(){
         when:
-        File f = new File(projectDir, "libraries")
+        File f = new File(test.projectDir, JteExtension.DEFAULT_BASE_DIRECTORY)
         f.createNewFile()
-        def result = jte.buildAndFail()
+        def result = test.jte.buildAndFail()
         then:
         result.task(":jte").outcome == FAILED
         result.output =~ /baseDirectory .* is not a directory/
@@ -52,70 +33,68 @@ class FunctionalTestSpec extends Specification {
 
     def "libraries at default location get included in plugin source directory"() {
         given:
-        buildFile << """
+        test.buildFile << """
         jte{
-          pluginGenerationDirectory = file('${pluginDir}')
+          pluginGenerationDirectory = file('${test.pluginDir}')
         }
         """
-        File library = new File(projectDir, "libraries/exampleLibrary/steps")
-        library.mkdirs()
-        File step = new File(library, "example.groovy")
-        step.text = "void call(){}"
+        test.createStep("exampleLibrary", "example", "void call(){}")
         when:
-        def result = jte.build()
+        def result = test.jte.build()
         then:
         result.task(":jte").outcome == SUCCESS
-        new File(pluginDir, "src/main/resources/libraries/exampleLibrary/steps/example.groovy").exists()
+        new File(test.pluginDir, "src/main/resources/libraries/exampleLibrary/steps/example.groovy").exists()
     }
 
     def "user provided libraries location get included in plugin source directory"(){
         given:
-        buildFile << """
+        String baseDirectory = "nested/location"
+        test.buildFile << """
         jte{
-          pluginGenerationDirectory = file('${pluginDir}')
-          baseDirectory = file("nested/location")
+          pluginGenerationDirectory = file('${test.pluginDir}')
+          baseDirectory = file("${baseDirectory}")
         }
         """
-        File library = new File(projectDir, "nested/location/exampleLibrary/steps")
-        library.mkdirs()
-        File step = new File(library, "example.groovy")
-        step.text = "void call(){}"
+        test.setBaseDirectory(baseDirectory)
+        test.createStep("exampleLibrary", "example", "void call(){}")
         when:
-        def result = jte.build()
+        def result = test.jte.build()
         then:
         result.task(":jte").outcome == SUCCESS
-        new File(pluginDir, "src/main/resources/libraries/exampleLibrary/steps/example.groovy").exists()
+        new File(test.pluginDir, "src/main/resources/libraries/exampleLibrary/steps/example.groovy").exists()
     }
 
     def "when pluginSymbol not provided, @Symbol not present in source file"(){
-        buildFile << """
+        given:
+        test.buildFile << """
         jte{
-          pluginGenerationDirectory = file('${pluginDir}')
+          pluginGenerationDirectory = file('${test.pluginDir}')
         }
         """
-        new File(projectDir, "libraries").mkdirs()
+        test.baseDirectory.mkdirs()
         when:
-        def result = jte.build()
+        def result = test.jte.build()
         then:
         result.task(":jte").outcome == SUCCESS
-        File source = new File(pluginDir, "src/main/groovy/LibrarySourcePlugin.groovy")
+        File source = new File(test.pluginDir, "src/main/groovy/LibrarySourcePlugin.groovy")
         assert source.exists()
         assert !source.text.contains("@Symbol")
     }
 
     def "when pluginSymbol is provided, @Symbol is present in source file"(){
-        buildFile << """
+        given:
+        test.buildFile << """
         jte{
-          pluginGenerationDirectory = file('${pluginDir}')
+          pluginGenerationDirectory = file('${test.pluginDir}')
           pluginSymbol = "myCustomName"
         }
         """
-        new File(projectDir, "libraries").mkdirs()
+        test.baseDirectory.mkdirs()
         when:
-        def result = jte.build()
+        def result = test.jte.build()
         then:
         result.task(":jte").outcome == SUCCESS
-        File source = new File(pluginDir, "src/main/groovy/LibrarySourcePlugin.groovy")
+        File source = new File(test.pluginDir, "src/main/groovy/LibrarySourcePlugin.groovy")
         assert source.exists()
         assert source.text.contains("@Symbol('myCustomName')")
     }
