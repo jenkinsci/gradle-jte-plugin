@@ -7,10 +7,6 @@ import org.boozallen.plugins.jte.init.governance.config.ConsolePipelineConfigura
 import org.boozallen.plugins.jte.init.governance.libs.LibrarySource
 import org.boozallen.plugins.jte.job.AdHocTemplateFlowDefinition
 import org.boozallen.plugins.jte.job.ConsoleAdHocTemplateFlowDefinitionConfiguration
-import org.gradle.api.Project
-import org.gradle.testfixtures.ProjectBuilder
-import org.gradle.testkit.runner.GradleRunner
-import org.jenkinsci.gradle.plugins.jpi.JpiPlugin
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.junit.ClassRule
@@ -20,7 +16,7 @@ import spock.lang.Specification
 import org.boozallen.plugins.jte.init.governance.libs.PluginLibraryProvider
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class TestSpec extends Specification {
+class IntegrationTestSpec extends Specification {
 
     TestUtil test
     @Shared @ClassRule JenkinsRule jenkins = new JenkinsRule()
