@@ -1,25 +1,17 @@
 package org.jenkinsci.gradle.plugins.jte
 
-import org.boozallen.plugins.jte.init.governance.GovernanceTier
-import org.boozallen.plugins.jte.init.governance.TemplateGlobalConfig
-import org.boozallen.plugins.jte.init.governance.config.ConsoleDefaultPipelineTemplate
-import org.boozallen.plugins.jte.init.governance.config.ConsolePipelineConfiguration
-import org.boozallen.plugins.jte.init.governance.libs.LibrarySource
-import org.boozallen.plugins.jte.job.AdHocTemplateFlowDefinition
-import org.boozallen.plugins.jte.job.ConsoleAdHocTemplateFlowDefinitionConfiguration
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jenkinsci.plugins.workflow.job.WorkflowRun
-import org.junit.ClassRule
+import org.junit.Rule
 import org.jvnet.hudson.test.JenkinsRule
-import spock.lang.Shared
 import spock.lang.Specification
-import org.boozallen.plugins.jte.init.governance.libs.PluginLibraryProvider
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class IntegrationTestSpec extends Specification {
 
     TestUtil test
-    @Shared @ClassRule JenkinsRule jenkins = new JenkinsRule()
+    @Rule JenkinsRule jenkins = new JenkinsRule()
+
 
     void setup(){
         test = TestUtil.setup()
@@ -33,54 +25,99 @@ class IntegrationTestSpec extends Specification {
         def result = test.jte.build()
 
         then: "the task succeeds and produces the generated plugin artifact"
-        result.task(":jte").outcome == SUCCESS
-        File plugin = new File(test.projectDir, "build/libs/my-libraries.hpi")
+        assert result.task(":jte").outcome == SUCCESS
+        File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
         assert plugin.exists()
 
-        expect: "Jenkins does not find any JTE library providing plugins"
-        assert PluginLibraryProvider.DescriptorImpl.getLibraryProvidingPlugins().isEmpty()
-
-        when: "the generated plugin is installed"
-        jenkins.getInstance().getPluginManager().dynamicLoad(plugin)
+        when: "the generated plugin is installed and jenkins restarted"
+        jenkins.pluginManager.dynamicLoad(plugin)
 
         then: "Jenkins can now find the JTE library providing plugin"
-        List plugins = PluginLibraryProvider.DescriptorImpl.getLibraryProvidingPlugins()
-        assert plugins.size() == 1
-        assert plugins.first().getDisplayName() == "custom library providing plugin"
+        assert test.getPlugin(jenkins)
     }
 
-    def "Libraries from generated plugin works in pipeline"(){
+    def "Library steps from generated plugin work in pipeline"(){
         given: "there's a project using this gradle plugin with two libraries"
         test.createStep("exampleLibrary", "step1", "void call(){ println 'running step 1' }")
         test.createStep("anotherLibrary", "step2", "void call(){ println 'running step 2' }")
 
         when: "the plugin is installed"
         test.jte.build()
-        File plugin = new File(test.projectDir, "build/libs/my-libraries.hpi")
-        jenkins.getInstance().getPluginManager().dynamicLoad(plugin)
-        List plugins = PluginLibraryProvider.DescriptorImpl.getLibraryProvidingPlugins()
+        File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
+        jenkins.pluginManager.dynamicLoad(plugin)
 
         and: "a governance tier has the generated plugin as a library source"
-        PluginLibraryProvider provider = new PluginLibraryProvider(plugins.first().getClass().getDeclaringClass().newInstance())
-        LibrarySource source = new LibrarySource(provider)
-        TemplateGlobalConfig global = TemplateGlobalConfig.get()
-        GovernanceTier tier = global.getTier() ?: new GovernanceTier()
-        tier.setLibrarySources([ source ])
-        global.setTier(tier)
+        test.addLibrarySource(jenkins)
 
         and: "a pipeline loads the libraries and calls the steps"
-        WorkflowJob job = jenkins.createProject(WorkflowJob)
-        def pipelineConfig = new ConsolePipelineConfiguration(true, 'libraries{ exampleLibrary; anotherLibrary }')
-        def pipelineTemplate = new ConsoleDefaultPipelineTemplate(true, 'step1(); step2()')
-        def templateConfiguration = new ConsoleAdHocTemplateFlowDefinitionConfiguration(pipelineTemplate, pipelineConfig)
-        def definition = new AdHocTemplateFlowDefinition(templateConfiguration)
-        job.setDefinition(definition)
+        WorkflowJob job = test.createJob(jenkins,
+            'libraries{ exampleLibrary; anotherLibrary }',
+            'step1(); step2()'
+        )
         WorkflowRun run = job.scheduleBuild2(0).get()
 
         then: "the pipeline succeeds"
         jenkins.assertBuildStatusSuccess(run)
         jenkins.assertLogContains("running step 1", run)
         jenkins.assertLogContains("running step 2", run)
+    }
+
+    def "Library resources from generated plugin work in pipeline"(){
+        given: "there's a project using this gradle plugin with two libraries"
+        test.createResource("exampleLibrary", "file.txt", "resource text")
+        test.createStep("exampleLibrary", "step", "void call(){ println resource('file.txt') }")
+
+
+        when: "the plugin is installed"
+        test.jte.build()
+        File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
+        jenkins.pluginManager.dynamicLoad(plugin)
+
+        and: "a governance tier has the generated plugin as a library source"
+        test.addLibrarySource(jenkins)
+
+        and: "a pipeline loads the libraries and calls the steps"
+        WorkflowJob job = test.createJob(jenkins,
+            'libraries{ exampleLibrary }',
+            'step()'
+        )
+        WorkflowRun run = job.scheduleBuild2(0).get()
+
+        then: "the pipeline succeeds"
+        jenkins.assertBuildStatusSuccess(run)
+        jenkins.assertLogContains("resource text", run)
+    }
+
+    def "Library classes from generated plugin work in pipeline"(){
+        given: "there's a project using this gradle plugin with two libraries"
+        test.createClass("exampleLibrary", "Utility.groovy", """
+        class Utility{
+          static printMessage(def x){
+            x.steps.echo "message from class"
+          }
+        }
+        """)
+        test.createStep("exampleLibrary", "step", "import Utility; void call(){ Utility.printMessage(this) }")
+
+
+        when: "the plugin is installed"
+        test.jte.build()
+        File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
+        jenkins.pluginManager.dynamicLoad(plugin)
+
+        and: "a governance tier has the generated plugin as a library source"
+        test.addLibrarySource(jenkins)
+
+        and: "a pipeline loads the libraries and calls the steps"
+        WorkflowJob job = test.createJob(jenkins,
+            'libraries{ exampleLibrary }',
+            'step()'
+        )
+        WorkflowRun run = job.scheduleBuild2(0).get()
+
+        then: "the pipeline succeeds"
+        jenkins.assertBuildStatusSuccess(run)
+        jenkins.assertLogContains("message from class", run)
     }
 
 }
