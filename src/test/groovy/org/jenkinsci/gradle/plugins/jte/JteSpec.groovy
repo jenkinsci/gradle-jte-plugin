@@ -1,5 +1,6 @@
 package org.jenkinsci.gradle.plugins.jte
 
+import org.gradle.testkit.runner.BuildResult
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.junit.Rule
@@ -7,22 +8,17 @@ import org.jvnet.hudson.test.JenkinsRule
 import spock.lang.Specification
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class IntegrationTestSpec extends Specification {
+class JteSpec extends Specification {
 
-    TestUtil test
+    TestUtil test = new TestUtil()
     @Rule JenkinsRule jenkins = new JenkinsRule()
-
-
-    void setup(){
-        test = TestUtil.setup()
-    }
 
     def "Installing the generated plugin registers the extension"(){
         given: "there's a project using this gradle plugin"
         test.createStep("exampleLibrary", "example", "void call(){}")
 
         when: "the jte task is invoked"
-        def result = test.jte.build()
+        BuildResult result = test.runJteTask()
 
         then: "the task succeeds and produces the generated plugin artifact"
         assert result.task(":jte").outcome == SUCCESS
@@ -42,7 +38,7 @@ class IntegrationTestSpec extends Specification {
         test.createStep("anotherLibrary", "step2", "void call(){ println 'running step 2' }")
 
         when: "the plugin is installed"
-        test.jte.build()
+        test.runJteTask()
         File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
         jenkins.pluginManager.dynamicLoad(plugin)
 
@@ -69,7 +65,7 @@ class IntegrationTestSpec extends Specification {
 
 
         when: "the plugin is installed"
-        test.jte.build()
+        test.runJteTask()
         File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
         jenkins.pluginManager.dynamicLoad(plugin)
 
@@ -101,7 +97,7 @@ class IntegrationTestSpec extends Specification {
 
 
         when: "the plugin is installed"
-        test.jte.build()
+        test.runJteTask()
         File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
         jenkins.pluginManager.dynamicLoad(plugin)
 

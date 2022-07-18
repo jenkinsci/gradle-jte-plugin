@@ -1,5 +1,6 @@
 package org.jenkinsci.gradle.plugins.jte
 
+import com.cloudbees.hudson.plugins.folder.Folder
 import hudson.PluginWrapper
 import org.boozallen.plugins.jte.init.governance.GovernanceTier
 import org.boozallen.plugins.jte.init.governance.TemplateGlobalConfig
@@ -10,7 +11,9 @@ import org.boozallen.plugins.jte.init.governance.libs.LibrarySource
 import org.boozallen.plugins.jte.init.governance.libs.PluginLibraryProvider
 import org.boozallen.plugins.jte.job.AdHocTemplateFlowDefinition
 import org.boozallen.plugins.jte.job.ConsoleAdHocTemplateFlowDefinitionConfiguration
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jvnet.hudson.test.JenkinsRule
 
@@ -18,27 +21,17 @@ class TestUtil {
     /**
      * The directory where the test gradle project will be
      */
-    File projectDir
+    File projectDir = File.createTempDir()
 
     /**
      * The directory where the generated plugin source code will be
      */
-    File pluginDir
-
-    /**
-     * The build.gradle file for the test gradle project
-     */
-    File buildFile
-
-    /**
-     * The 'jte' task to execute
-     */
-    GradleRunner jte
+    File pluginDir = File.createTempDir()
 
     /**
      * The base directory where the test libraries can be found
      */
-    File baseDirectory
+    File baseDirectory = new File(projectDir, JteExtension.DEFAULT_BASE_DIRECTORY)
 
     /**
      * randomly generated plugin short name
@@ -48,27 +41,47 @@ class TestUtil {
      */
     String pluginShortName
 
-    TestUtil(File projectDir, File pluginDir){
-        this.projectDir = projectDir
-        this.pluginDir = pluginDir
-        this.baseDirectory = new File(projectDir, JteExtension.DEFAULT_BASE_DIRECTORY)
-        jte = GradleRunner.create()
-                .withProjectDir(projectDir)
-                .withArguments("jte")
-                .withPluginClasspath()
-        pluginShortName = UUID.randomUUID().toString().replaceAll("-","")
-        buildFile = new File(projectDir, "build.gradle")
-        buildFile << """
+    /**
+     * The jenkinsVersion that will be passed to the jenkinsPlugin
+     * section of build.gradle
+     */
+    String jenkinsVersion = "2.263.1"
+
+    /**
+     * The symbol that will be provided to the jte{} block
+     * in the build.gradle file
+     */
+    String pluginSymbol
+
+    BuildResult runJteTask(boolean shouldFail = false){
+        pluginShortName = pluginShortName ?: UUID.randomUUID().toString().replaceAll("-","")
+
+        File buildFile = new File(projectDir, "build.gradle")
+        buildFile.text = """
         plugins{
           id 'org.jenkins-ci.jte'
         }
 
         jenkinsPlugin{
-          coreVersion = '2.263.1'
+          coreVersion = '${jenkinsVersion}'
           shortName = '${pluginShortName}'
           displayName = "custom library providing plugin"
         }
+        
+        jte{
+            pluginGenerationDirectory = file('${pluginDir}')
+            ${pluginSymbol ? "pluginSymbol = '${pluginSymbol}'": ""}
+            baseDirectory = file("${baseDirectory}")
+        }        
         """
+
+        GradleRunner jte = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("jte")
+            .withPluginClasspath()
+
+        return shouldFail ? jte.buildAndFail() : jte.build()
+
     }
 
     void setBaseDirectory(String path){
@@ -109,8 +122,17 @@ class TestUtil {
         global.setTier(tier)
     }
 
-    WorkflowJob createJob(JenkinsRule jenkins, String config, String template){
-        WorkflowJob job = jenkins.createProject(WorkflowJob)
+    /**
+     * Creates a JTE pipeline job with the given config and template
+     * within the provided owner
+     *
+     * @param owner either the JenkinsRule or a Folder
+     * @param config the Pipeline Configuration for this job
+     * @param template the Pipeline Template for this job
+     * @return the created job
+     */
+    WorkflowJob createJob(def owner, String config, String template){
+        WorkflowJob job = owner.createProject(WorkflowJob, UUID.randomUUID().toString())
         def pipelineConfig = new ConsolePipelineConfiguration(true, config)
         def pipelineTemplate = new ConsoleDefaultPipelineTemplate(true, template)
         def templateConfiguration = new ConsoleAdHocTemplateFlowDefinitionConfiguration(pipelineTemplate, pipelineConfig)
@@ -134,9 +156,4 @@ class TestUtil {
         return p ? p.getClass().getDeclaringClass().newInstance() : null
     }
 
-    static TestUtil setup(){
-        File projectDir = File.createTempDir()
-        File pluginDir = File.createTempDir()
-        return new TestUtil(projectDir, pluginDir)
-    }
 }

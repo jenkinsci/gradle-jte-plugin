@@ -62,4 +62,9 @@ dependencies {
     testImplementation 'org.jenkins-ci.main:jenkins-test-harness:2.71'
     testImplementation 'org.jenkins-ci.plugins:templating-engine:2.5.2'
     testImplementation 'org.jenkins-ci.plugins.workflow:workflow-job:2.42'
+    // --> test job dsl
+    testImplementation 'org.jenkins-ci.plugins:job-dsl:1.79'
+    testImplementation 'org.jenkins-ci.plugins:cloudbees-folder:6.9'
+    // --> test JCasC
+    testImplementation 'io.jenkins:configuration-as-code:1346.ve8cfa_3473c94'
 }
