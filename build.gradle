@@ -47,7 +47,7 @@ jenkinsPlugin {
 
 dependencies {
     implementation gradleApi()
-    implementation "org.jenkins-ci.tools:gradle-jpi-plugin:0.44.0-SNAPSHOT"
+    implementation "org.jenkins-ci.tools:gradle-jpi-plugin:0.43.0"
     implementation 'org.codehaus.groovy:groovy-all:2.4.17'
 
     // spock dependencies
