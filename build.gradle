@@ -1,6 +1,6 @@
 plugins{
+    id 'com.gradle.plugin-publish' version '1.0.0'
     id 'groovy'
-    id 'java-gradle-plugin'
     id 'org.jenkins-ci.jpi' version '0.43.0'
 }
 
@@ -13,6 +13,17 @@ repositories {
     maven { url 'https://repo.jenkins-ci.org/public/' }
     maven { url 'https://repo.jenkins-ci.org/releases/' }
     gradlePluginPortal()
+}
+
+version = "0.1.0"
+group = "org.jenkins-ci.tools"
+description = "Gradle plugin for packaging Jenkins Templating Engine library sources as a Jenkins plugin"
+
+pluginBundle{
+    website = "https://jenkinsci.github.io/templating-engine-plugin"
+    vcsUrl = "https://github.com/jenkinsci/gradle-jte-plugin"
+    description = project.description
+    tags = [ 'jenkins' ]
 }
 
 gradlePlugin {
@@ -31,7 +42,7 @@ configurations {
 }
 
 jenkinsPlugin {
-    coreVersion = '2.263.1'
+    jenkinsVersion = '2.263.1'
 }
 
 dependencies {
