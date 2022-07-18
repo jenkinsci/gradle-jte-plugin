@@ -31,7 +31,7 @@ gradlePlugin {
         jte {
             id = 'org.jenkins-ci.jte'
             implementationClass = 'org.jenkinsci.gradle.plugins.jte.JtePlugin'
-            displayName = description()
+            displayName = project.description
         }
     }
 }
