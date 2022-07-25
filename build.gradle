@@ -16,13 +16,11 @@ repositories {
 }
 
 version = "0.1.0"
-// to-do switch this once i get permissions to do so
-//group = "org.jenkins-ci.tools"
-group = "io.github.steven-terrana"
+group = "io.jenkins-ci.tools"
 description = "Gradle plugin for packaging Jenkins Templating Engine library sources as a Jenkins plugin"
 
 pluginBundle{
-    website = "https://jenkinsci.github.io/templating-engine-plugin"
+    websiteUrl = "https://github.com/jenkinsci/gradle-jte-plugin"
     vcsUrl = "https://github.com/jenkinsci/gradle-jte-plugin"
     description = project.description
     tags = [ 'jenkins' ]
@@ -31,8 +29,7 @@ pluginBundle{
 gradlePlugin {
     plugins {
         jte {
-//            id = 'org.jenkins-ci.jte'
-            id = 'io.github.steven-terrana.jte'
+            id = 'io.jenkins-ci.jte'
             implementationClass = 'org.jenkinsci.gradle.plugins.jte.JtePlugin'
             displayName = project.description
         }
