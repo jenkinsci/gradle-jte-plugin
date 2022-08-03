@@ -16,11 +16,11 @@ repositories {
 }
 
 version = "0.1.0"
-group = "io.jenkins-ci.tools"
+group = "io.jenkins.tools"
 description = "Gradle plugin for packaging Jenkins Templating Engine library sources as a Jenkins plugin"
 
 pluginBundle{
-    websiteUrl = "https://github.com/jenkinsci/gradle-jte-plugin"
+    website = "https://github.com/jenkinsci/gradle-jte-plugin"
     vcsUrl = "https://github.com/jenkinsci/gradle-jte-plugin"
     description = project.description
     tags = [ 'jenkins' ]
@@ -29,7 +29,7 @@ pluginBundle{
 gradlePlugin {
     plugins {
         jte {
-            id = 'io.jenkins-ci.jte'
+            id = 'io.jenkins.jte'
             implementationClass = 'org.jenkinsci.gradle.plugins.jte.JtePlugin'
             displayName = project.description
         }

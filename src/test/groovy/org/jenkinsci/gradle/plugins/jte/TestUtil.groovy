@@ -59,7 +59,7 @@ class TestUtil {
         File buildFile = new File(projectDir, "build.gradle")
         buildFile.text = """
         plugins{
-          id 'org.jenkins-ci.jte'
+          id 'io.jenkins.jte'
         }
 
         jenkinsPlugin{
