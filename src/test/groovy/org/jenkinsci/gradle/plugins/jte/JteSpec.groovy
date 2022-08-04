@@ -5,6 +5,7 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.junit.Rule
 import org.jvnet.hudson.test.JenkinsRule
+import spock.lang.Issue
 import spock.lang.Specification
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
@@ -114,6 +115,69 @@ class JteSpec extends Specification {
         then: "the pipeline succeeds"
         jenkins.assertBuildStatusSuccess(run)
         jenkins.assertLogContains("message from class", run)
+    }
+
+    @Issue("https://github.com/jenkinsci/gradle-jte-plugin/issues/1")
+    def "project with custom groovy src dirs"(){
+        given: "there's a project that sets custom groovy src dirs"
+        test.appendToBuildFile("""
+        sourceSets{
+          main{
+            groovy{
+              srcDirs = [ "libraries" ]
+            }
+          }
+        }
+        """.stripIndent())
+        test.createStep("example", "step", "void call(){println 'step ran'}")
+
+        when: "the plugin is installed"
+        test.runJteTask()
+        File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
+        jenkins.pluginManager.dynamicLoad(plugin)
+
+        and: "a governance tier has the generated plugin as a library source"
+        test.addLibrarySource(jenkins)
+
+        and: "a pipeline loads the libraries and calls the steps"
+        WorkflowJob job = test.createJob(jenkins,
+                'libraries{ example }',
+                'step()'
+        )
+        WorkflowRun run = job.scheduleBuild2(0).get()
+
+        then: "the pipeline succeeds"
+        jenkins.assertBuildStatusSuccess(run)
+        jenkins.assertLogContains("step ran", run)
+
+    }
+
+    @Issue("https://github.com/jenkinsci/gradle-jte-plugin/issues/1")
+    def "project with compileGroovy.enabled = false"(){
+        given: "there's a project that disables groovy compilation"
+        test.appendToBuildFile("""
+        compileGroovy.enabled = false
+        """.stripIndent())
+        test.createStep("example", "step", "void call(){println 'step ran'}")
+
+        when: "the plugin is installed"
+        test.runJteTask()
+        File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
+        jenkins.pluginManager.dynamicLoad(plugin)
+
+        and: "a governance tier has the generated plugin as a library source"
+        test.addLibrarySource(jenkins)
+
+        and: "a pipeline loads the libraries and calls the steps"
+        WorkflowJob job = test.createJob(jenkins,
+                'libraries{ example }',
+                'step()'
+        )
+        WorkflowRun run = job.scheduleBuild2(0).get()
+
+        then: "the pipeline succeeds"
+        jenkins.assertBuildStatusSuccess(run)
+        jenkins.assertLogContains("step ran", run)
     }
 
 }

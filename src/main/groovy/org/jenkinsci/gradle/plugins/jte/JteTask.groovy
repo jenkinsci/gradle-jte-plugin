@@ -3,6 +3,7 @@ package org.jenkinsci.gradle.plugins.jte
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.SourceSet
@@ -70,8 +71,13 @@ abstract class JteTask extends DefaultTask{
         }
 
         // ensure Groovy plugin is applied and
-        // add temporary directory to source sets
         project.plugins.apply(GroovyPlugin)
+        // ensure the compileGroovy task is enabled
+        Set<Task> compileGroovy = project.getTasksByName("compileGroovy", false)
+        for (task in compileGroovy){
+            task.setEnabled(true)
+        }
+        // update the groovy source directories with the generated plugin code
         SourceSetContainer sourceSets = project.getExtensions().getByType(SourceSetContainer)
         SourceSet main = sourceSets.getByName("main")
         main.groovy.srcDir(new File(pluginDir, "src/main/groovy"))
