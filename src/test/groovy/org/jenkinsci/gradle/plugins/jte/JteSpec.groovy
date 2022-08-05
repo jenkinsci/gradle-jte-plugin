@@ -1,4 +1,21 @@
+/*
+    Copyright (c) 2018-2022 Booz Allen Hamilton
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 package org.jenkinsci.gradle.plugins.jte
+
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 import org.gradle.testkit.runner.BuildResult
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
@@ -6,7 +23,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun
 import org.junit.Rule
 import org.jvnet.hudson.test.JenkinsRule
 import spock.lang.Specification
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class JteSpec extends Specification {
 
@@ -63,7 +79,6 @@ class JteSpec extends Specification {
         test.createResource("exampleLibrary", "file.txt", "resource text")
         test.createStep("exampleLibrary", "step", "void call(){ println resource('file.txt') }")
 
-
         when: "the plugin is installed"
         test.runJteTask()
         File plugin = new File(test.projectDir, "build/libs/${test.pluginShortName}.hpi")
@@ -94,7 +109,6 @@ class JteSpec extends Specification {
         }
         """)
         test.createStep("exampleLibrary", "step", "import Utility; void call(){ Utility.printMessage(this) }")
-
 
         when: "the plugin is installed"
         test.runJteTask()

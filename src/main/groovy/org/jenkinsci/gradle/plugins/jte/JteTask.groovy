@@ -1,3 +1,18 @@
+/*
+    Copyright (c) 2018-2022 Booz Allen Hamilton
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 package org.jenkinsci.gradle.plugins.jte
 
 import org.gradle.api.DefaultTask
@@ -8,6 +23,8 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
+import java.nio.file.Files
+import java.nio.file.Path
 
 /**
  * Implements the `jte` task which creates a directory and
@@ -15,6 +32,7 @@ import org.gradle.api.tasks.TaskAction
  * Plugin that will be built.
  */
 abstract class JteTask extends DefaultTask{
+
     @Input
     JteExtension extension
 
@@ -22,7 +40,7 @@ abstract class JteTask extends DefaultTask{
     Project project
 
     @TaskAction
-    def create(){
+    void configure(){
         // confirm libraries base directory exists and is a directory
         File baseDirectory =  extension.baseDirectory.get().asFile
         if(!baseDirectory.exists()){
@@ -53,7 +71,7 @@ abstract class JteTask extends DefaultTask{
         srcDir.mkdirs()
         InputStream libraryClassFile = getClass().getResourceAsStream("LibrarySourcePlugin.groovy.template")
         String source =  libraryClassFile.readLines().join("\n")
-        File librarySourceClassFile = File.createTempFile("LibrarySourcePlugin", ".groovy")
+        Path librarySourceClassFile = Files.createTempFile("LibrarySourcePlugin", ".groovy")
         librarySourceClassFile.text = source
         String symbol
         if (extension.pluginSymbol.isPresent()){
@@ -84,7 +102,7 @@ abstract class JteTask extends DefaultTask{
      * @return
      */
     String generatePackageName(){
-        String uuid = UUID.randomUUID().toString().replaceAll("-","")
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "")
         return "jte.generated.a${uuid}" // package names have to start with a letter
     }
 

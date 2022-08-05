@@ -2,6 +2,8 @@ plugins{
     id 'com.gradle.plugin-publish' version '1.0.0'
     id 'groovy'
     id 'org.jenkins-ci.jpi' version '0.43.0'
+    id "com.diffplug.gradle.spotless" version "3.29.0"
+    id 'codenarc'
 }
 
 sourceCompatibility = '1.8'
@@ -41,6 +43,7 @@ configurations {
     all*.exclude group: "org.junit", module: "junit-bom"
 }
 
+jpi.enabled = false
 jenkinsPlugin {
     jenkinsVersion = '2.263.1'
 }
@@ -67,4 +70,31 @@ dependencies {
     testImplementation 'org.jenkins-ci.plugins:cloudbees-folder:6.9'
     // --> test JCasC
     testImplementation 'io.jenkins:configuration-as-code:1346.ve8cfa_3473c94'
+}
+
+codenarc{
+    toolVersion = '1.6.1'
+}
+codenarcMain{
+    source = fileTree("src/main/groovy")
+    configFile = file("./.codenarc/main.groovy")
+}
+codenarcTest {
+    source = fileTree("src/test/groovy")
+    configFile = file("./.codenarc/test.groovy")
+}
+task codenarc {
+    description = "Evaluate code against CodeNarc"
+    dependsOn = [ 'codenarcMain', 'codenarcTest' ]
+}
+
+
+    spotless{
+    groovy{
+        target = fileTree("src/main/groovy") + fileTree(dir: "src/main/resources", include: "**/*.groovy") + fileTree("src/test/groovy")
+        trimTrailingWhitespace()
+        indentWithSpaces()
+        endWithNewline()
+        licenseHeaderFile 'groovy.header'
+    }
 }

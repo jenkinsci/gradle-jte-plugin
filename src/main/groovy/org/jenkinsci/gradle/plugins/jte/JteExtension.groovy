@@ -1,3 +1,18 @@
+/*
+    Copyright (c) 2018-2022 Booz Allen Hamilton
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 package org.jenkinsci.gradle.plugins.jte
 
 import org.gradle.api.Project
@@ -10,14 +25,28 @@ import org.gradle.api.tasks.Optional
  * the build configuration
  */
 abstract class JteExtension{
+
+    static final String DEFAULT_BASE_DIRECTORY = "libraries"
+
+    /**
+     * Registers the `jte` Extension and defines configuration conventions
+     * @param project
+     * @return
+     */
+    static Object configure(Project project){
+        // register the `jte` block in the build configuration dsl
+        Object extension = project.extensions.create('jte', JteExtension)
+        // set the default value of `jte.baseDirectory` to `libraries`
+        extension.baseDirectory.convention(project.getLayout().getProjectDirectory().file(DEFAULT_BASE_DIRECTORY))
+        return extension
+    }
+
     /**
      * defines where the libraries to bundle into the resulting
      * jenkins plugin can be found
      * @return the value of `baseDirectory` from the build configuration
      */
     abstract RegularFileProperty getBaseDirectory()
-
-    static final DEFAULT_BASE_DIRECTORY = "libraries"
 
     /**
      * defines the value provided to the `@Symbol` annotation on the
@@ -36,16 +65,4 @@ abstract class JteExtension{
     @Optional
     abstract RegularFileProperty getPluginGenerationDirectory()
 
-    /**
-     * Registers the `jte` Extension and defines configuration conventions
-     * @param project
-     * @returnf
-     */
-    static def configure(Project project){
-        // register the `jte` block in the build configuration dsl
-        def extension = project.extensions.create('jte', JteExtension)
-        // set the default value of `jte.baseDirectory` to `libraries`
-        extension.baseDirectory.convention(project.getLayout().getProjectDirectory().file(DEFAULT_BASE_DIRECTORY))
-        return extension
-    }
 }
