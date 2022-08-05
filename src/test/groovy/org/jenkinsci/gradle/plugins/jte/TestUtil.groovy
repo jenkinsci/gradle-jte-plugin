@@ -67,6 +67,11 @@ class TestUtil {
      */
     String pluginSymbol
 
+    /**
+     * Test provided additional text for the build.gradle file
+     */
+    String buildFileAppends
+
     BuildResult runJteTask(boolean shouldFail = false){
         pluginShortName = pluginShortName ?: UUID.randomUUID().toString().replaceAll("-","")
 
@@ -74,6 +79,7 @@ class TestUtil {
         buildFile.text = """
         plugins{
           id 'io.jenkins.jte'
+          id 'groovy'
         }
 
         jenkinsPlugin{
@@ -87,6 +93,8 @@ class TestUtil {
             ${pluginSymbol ? "pluginSymbol = '${pluginSymbol}'" : ""}
             baseDirectory = file("${baseDirectory}")
         }
+        
+        ${buildFileAppends}
         """
 
         GradleRunner jte = GradleRunner.create()
@@ -95,6 +103,14 @@ class TestUtil {
             .withPluginClasspath()
 
         return shouldFail ? jte.buildAndFail() : jte.build()
+    }
+
+    void appendToBuildFile(String text){
+        buildFileAppends = """
+        ${buildFileAppends}
+
+        ${text}
+        """.stripIndent()
     }
 
     void setBaseDirectory(String path){
@@ -133,7 +149,11 @@ class TestUtil {
     }
 
     void addLibrarySource(JenkinsRule jenkins){
-        PluginLibraryProvider provider = new PluginLibraryProvider(getPlugin(jenkins))
+        LibraryProvidingPlugin plugin = getPlugin(jenkins)
+        if(plugin == null){
+            throw new Exception("Could not find generated plugin in jenkins!")
+        }
+        PluginLibraryProvider provider = new PluginLibraryProvider(plugin)
         LibrarySource source = new LibrarySource(provider)
         TemplateGlobalConfig global = TemplateGlobalConfig.get()
         GovernanceTier tier = global.getTier() ?: new GovernanceTier()
