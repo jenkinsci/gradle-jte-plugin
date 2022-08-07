@@ -107,6 +107,7 @@ class FunctionalTestSpec extends Specification {
         when:
         BuildResult result = test.runJteTask()
         then:
+        result.task(":jte").outcome == SUCCESS
         File hpi = new File("${test.projectDir}/build/libs/${test.pluginShortName}.hpi")
         assert test.readFileInHpi(hpi, "META-INF/MANIFEST.MF").contains("templating-engine:2.0")
     }
@@ -118,6 +119,7 @@ class FunctionalTestSpec extends Specification {
         when:
         BuildResult result = test.runJteTask()
         then:
+        result.task(":jte").outcome == SUCCESS
         File hpi = new File("${test.projectDir}/build/libs/${test.pluginShortName}.hpi")
         assert test.readFileInHpi(hpi, "META-INF/MANIFEST.MF").contains("templating-engine:2.5.2")
     }
@@ -129,6 +131,7 @@ class FunctionalTestSpec extends Specification {
         when:
         BuildResult result = test.runJteTask(true)
         then:
+        println result.output
         assert result.output.contains("jteVersion '18.9.1.1.1' is not a JTE release.")
     }
 
@@ -139,6 +142,7 @@ class FunctionalTestSpec extends Specification {
         when:
         BuildResult result = test.runJteTask(true)
         then:
+        println result.output
         assert result.output.contains("jteVersion must be greater than release 2.0")
     }
 

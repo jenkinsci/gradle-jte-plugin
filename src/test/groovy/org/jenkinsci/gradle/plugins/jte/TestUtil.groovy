@@ -104,9 +104,9 @@ class TestUtil {
             baseDirectory = file("${baseDirectory}")
             ${jteVersion ? "jteVersion = '${jteVersion}'" : ""}
         }
-        
+
         ${buildFileAppends}
-        """
+        """.stripIndent()
 
         GradleRunner jte = GradleRunner.create()
             .withProjectDir(projectDir)
@@ -216,8 +216,8 @@ class TestUtil {
         ZipInputStream zipStream = new ZipInputStream(hpi.toURI().toURL().openStream())
         ZipEntry zipEntry = zipStream.getNextEntry()
         while(zipEntry != null){
-            String _path = zipEntry.getName()
-            if(path != _path){
+            String entryPath = zipEntry.getName()
+            if(path != entryPath){
                 zipEntry = zipStream.getNextEntry()
                 continue
             }

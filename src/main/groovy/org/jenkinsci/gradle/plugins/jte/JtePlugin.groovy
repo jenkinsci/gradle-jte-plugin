@@ -84,7 +84,7 @@ class JtePlugin implements Plugin<Project>{
             Boolean isValidJteVersion(String version){
                 URL url = "https://repo.jenkins-ci.org/artifactory/api/search/versions?g=org.jenkins-ci.plugins&a=templating-engine".toURL()
                 Object response = new JsonSlurper().parse(url)
-                Set<String> versions = response.results.collect{ it.version }
+                Set<String> versions = response.results.collect{ entry -> entry.version }
                 return version in versions
             }
 

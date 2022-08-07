@@ -163,7 +163,6 @@ class JteSpec extends Specification {
         then: "the pipeline succeeds"
         jenkins.assertBuildStatusSuccess(run)
         jenkins.assertLogContains("step ran", run)
-
     }
 
     @Issue("https://github.com/jenkinsci/gradle-jte-plugin/issues/1")
