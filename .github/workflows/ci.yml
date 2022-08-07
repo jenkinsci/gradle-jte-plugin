@@ -41,7 +41,7 @@ jobs:
           java-version: 8
       - uses: eskatos/gradle-command-action@v1
         with:
-          arguments: --no-daemon test jacocoTestReport
+          arguments: --no-daemon test
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
