@@ -93,13 +93,57 @@ class FunctionalTestSpec extends Specification {
 
         when:
         BuildResult result = test.runJteTask()
-        println test.projectDir
 
         then:
         result.task(":jte").outcome == SUCCESS
         File source = new File(test.pluginDir, "src/main/groovy/LibrarySourcePlugin.groovy")
         assert source.exists()
         assert source.text.contains("@Symbol('myCustomName')")
+    }
+
+    def "not setting jteVersion results in a dependency on 2.0"(){
+        given:
+        test.createStep("example","step","void call(){}")
+        when:
+        BuildResult result = test.runJteTask()
+        then:
+        result.task(":jte").outcome == SUCCESS
+        File hpi = new File("${test.projectDir}/build/libs/${test.pluginShortName}.hpi")
+        assert test.readFileInHpi(hpi, "META-INF/MANIFEST.MF").contains("templating-engine:2.0")
+    }
+
+    def "setting jteVersion changes the generated plugin dependency"(){
+        given:
+        test.setJteVersion("2.5.2")
+        test.createStep("example","step","void call(){}")
+        when:
+        BuildResult result = test.runJteTask()
+        then:
+        result.task(":jte").outcome == SUCCESS
+        File hpi = new File("${test.projectDir}/build/libs/${test.pluginShortName}.hpi")
+        assert test.readFileInHpi(hpi, "META-INF/MANIFEST.MF").contains("templating-engine:2.5.2")
+    }
+
+    def "invalid jteVersion throws exception"(){
+        given:
+        test.setJteVersion("18.9.1.1.1")
+        test.createStep("example","step","void call(){}")
+        when:
+        BuildResult result = test.runJteTask(true)
+        then:
+        println result.output
+        assert result.output.contains("jteVersion '18.9.1.1.1' is not a JTE release.")
+    }
+
+    def "jteVersion < 2.0 throws exception"(){
+        given:
+        test.setJteVersion("1.7.1")
+        test.createStep("example","step","void call(){}")
+        when:
+        BuildResult result = test.runJteTask(true)
+        then:
+        println result.output
+        assert result.output.contains("jteVersion must be greater than release 2.0")
     }
 
 }

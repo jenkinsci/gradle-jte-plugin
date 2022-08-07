@@ -30,6 +30,11 @@ import org.gradle.testkit.runner.GradleRunner
 import org.jenkinsci.plugins.workflow.job.WorkflowJob
 import org.jvnet.hudson.test.JenkinsRule
 
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
+import java.nio.charset.StandardCharsets
+
 class TestUtil {
 
     /**
@@ -72,6 +77,11 @@ class TestUtil {
      */
     String buildFileAppends
 
+    /**
+     * The version of jte the generated plugin should depend on
+     */
+    String jteVersion
+
     BuildResult runJteTask(boolean shouldFail = false){
         pluginShortName = pluginShortName ?: UUID.randomUUID().toString().replaceAll("-","")
 
@@ -92,10 +102,11 @@ class TestUtil {
             pluginGenerationDirectory = file('${pluginDir}')
             ${pluginSymbol ? "pluginSymbol = '${pluginSymbol}'" : ""}
             baseDirectory = file("${baseDirectory}")
+            ${jteVersion ? "jteVersion = '${jteVersion}'" : ""}
         }
-        
+
         ${buildFileAppends}
-        """
+        """.stripIndent()
 
         GradleRunner jte = GradleRunner.create()
             .withProjectDir(projectDir)
@@ -116,6 +127,10 @@ class TestUtil {
     void setBaseDirectory(String path){
         baseDirectory = new File(projectDir, path)
         baseDirectory.mkdirs()
+    }
+
+    void setJteVersion(String jteVersion){
+        this.jteVersion = jteVersion
     }
 
     void createStep(String libraryName, String stepName, String stepText){
@@ -194,6 +209,29 @@ class TestUtil {
             w.getShortName() == pluginShortName
         }
         return p ? p.getClass().getDeclaringClass().newInstance() : null
+    }
+
+    String readFileInHpi(File hpi, String path){
+        ZipFile zipFile = new ZipFile(hpi)
+        ZipInputStream zipStream = new ZipInputStream(hpi.toURI().toURL().openStream())
+        ZipEntry zipEntry = zipStream.getNextEntry()
+        while(zipEntry != null){
+            String entryPath = zipEntry.getName()
+            if(path != entryPath){
+                zipEntry = zipStream.getNextEntry()
+                continue
+            }
+            InputStream stream = zipFile.getInputStream(zipEntry)
+            ArrayList lines = []
+            try{
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
+                String line
+                while((line = bufferedReader.readLine()) != null){
+                    lines << line
+                }
+            } catch(ignored){}
+            return lines.join("\n")
+        }
     }
 
 }
