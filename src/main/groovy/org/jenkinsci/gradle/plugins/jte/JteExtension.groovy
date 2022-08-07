@@ -65,4 +65,7 @@ abstract class JteExtension{
     @Optional
     abstract RegularFileProperty getPluginGenerationDirectory()
 
+    @Optional
+    abstract Property<String> getJteVersion()
+
 }

@@ -24,6 +24,10 @@ jte{
     // create a temporary directory.
     // default value: null
     pluginGenerationDirectory = file("${project.buildDir}/generated-plugin")
+    
+    // the minimum version of JTE the generated plugin requires
+    // must be greater than version 2.0
+    jteVersion = '2.0'
 }
 
 // for a full list of configuration options, check out the
