@@ -44,6 +44,7 @@ configurations {
 }
 
 jpi.enabled = false
+generateMetadataFileForPluginMavenPublication.enabled = false
 jenkinsPlugin {
     jenkinsVersion = '2.263.1'
 }
