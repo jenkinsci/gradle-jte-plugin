@@ -17,7 +17,7 @@ repositories {
     gradlePluginPortal()
 }
 
-version = "0.1.0"
+version = '0.2.0'
 group = "io.jenkins.tools"
 description = "Gradle plugin for packaging Jenkins Templating Engine library sources as a Jenkins plugin"
 
