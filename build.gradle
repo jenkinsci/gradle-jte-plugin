@@ -43,10 +43,9 @@ configurations {
     all*.exclude group: "org.junit", module: "junit-bom"
 }
 
-jpi.enabled = false
-generateMetadataFileForPluginMavenPublication.enabled = false
 jenkinsPlugin {
     jenkinsVersion = '2.263.1'
+    configurePublishing = false
 }
 
 dependencies {
