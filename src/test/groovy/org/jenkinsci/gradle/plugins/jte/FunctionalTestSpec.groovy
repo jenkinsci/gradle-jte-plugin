@@ -19,6 +19,7 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 
 class FunctionalTestSpec extends Specification {
@@ -144,6 +145,21 @@ class FunctionalTestSpec extends Specification {
         then:
         println result.output
         assert result.output.contains("jteVersion must be greater than release 2.0")
+    }
+
+    def "dependencyInsight shows where templating-engine came from"() {
+        given:
+        test.setJteVersion("2.5.2")
+        test.createStep("example", "step", "void call(){}")
+        test.createJteBuildFile()
+        when:
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(test.projectDir)
+                .withArguments("dependencyInsight", "--configuration", "compileClasspath", "--dependency", "templating-engine")
+                .withPluginClasspath()
+                .build()
+        then:
+        result.output.contains("- Was requested : Added by io.jenkins.jte plugin using `jte.jteVersion`")
     }
 
 }
