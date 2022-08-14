@@ -27,6 +27,9 @@ import org.jenkinsci.gradle.plugins.jpi.JpiPlugin
  */
 class JtePlugin implements Plugin<Project>{
 
+    private static final String IMPLEMENTATION = "implementation"
+    private static final String MAVEN_COORDINATE = "org.jenkins-ci.plugins:templating-engine"
+
     @Override
     void apply(Project project){
         Object extension = JteExtension.configure(project)
@@ -46,13 +49,20 @@ class JtePlugin implements Plugin<Project>{
      * @param project
      */
     void addJteDependency(Project project, Object extension) {
-        project.configurations.getByName("implementation").withDependencies { dependencies ->
+        project.configurations.getByName(IMPLEMENTATION).withDependencies { dependencies ->
             String jteVersion = extension.jteVersion.get()
             checkVersion(jteVersion)
-            String gav = "org.jenkins-ci.plugins:templating-engine:${jteVersion}"
-            Dependency templatingEngine = project.dependencies.create(gav)
+            Dependency templatingEngine = project.dependencies.create("$MAVEN_COORDINATE:$jteVersion")
             templatingEngine.because('''Added by io.jenkins.jte plugin using `jte.jteVersion`''')
             dependencies.add(templatingEngine)
+        }
+        project.dependencies.constraints {
+            add(IMPLEMENTATION, MAVEN_COORDINATE) {
+                version {
+                    reject("(,2.0)")
+                }
+                because('jteVersion must be greater than release 2.0')
+            }
         }
     }
 
@@ -61,10 +71,6 @@ class JtePlugin implements Plugin<Project>{
         // ensure the major version is actually a number
         if(!major.isNumber()){
             throw new GradleException("jteVersion '${jteVersion}' is not valid.")
-        }
-        // ensure the major version is >= 2
-        if(major.toInteger() < 2){
-            throw new GradleException("jteVersion must be greater than release 2.0")
         }
         // ensure the specified version is actually a JTE release
         if(!isValidJteVersion(jteVersion)){
