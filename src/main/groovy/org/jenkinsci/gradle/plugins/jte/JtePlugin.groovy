@@ -47,10 +47,7 @@ class JtePlugin implements Plugin<Project>{
      */
     void addJteDependency(Project project, Object extension) {
         project.configurations.getByName("implementation").withDependencies { dependencies ->
-            String jteVersion = "2.0"
-            if (extension.jteVersion.isPresent()) {
-                jteVersion = extension.jteVersion.get()
-            }
+            String jteVersion = extension.jteVersion.get()
             checkVersion(jteVersion)
             String gav = "org.jenkins-ci.plugins:templating-engine:${jteVersion}"
             Dependency templatingEngine = project.dependencies.create(gav)
