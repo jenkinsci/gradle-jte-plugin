@@ -27,6 +27,7 @@ import org.gradle.api.tasks.Optional
 abstract class JteExtension{
 
     static final String DEFAULT_BASE_DIRECTORY = "libraries"
+    static final String DEFAULT_JTE_VERSION = "2.0"
 
     /**
      * Registers the `jte` Extension and defines configuration conventions
@@ -38,6 +39,7 @@ abstract class JteExtension{
         Object extension = project.extensions.create('jte', JteExtension)
         // set the default value of `jte.baseDirectory` to `libraries`
         extension.baseDirectory.convention(project.getLayout().getProjectDirectory().file(DEFAULT_BASE_DIRECTORY))
+        extension.jteVersion.convention(DEFAULT_JTE_VERSION)
         return extension
     }
 

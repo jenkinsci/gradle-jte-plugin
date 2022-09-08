@@ -83,6 +83,17 @@ class TestUtil {
     String jteVersion
 
     BuildResult runJteTask(boolean shouldFail = false){
+        createJteBuildFile()
+
+        GradleRunner jte = GradleRunner.create()
+            .withProjectDir(projectDir)
+            .withArguments("jte")
+            .withPluginClasspath()
+
+        return shouldFail ? jte.buildAndFail() : jte.build()
+    }
+
+    void createJteBuildFile() {
         pluginShortName = pluginShortName ?: UUID.randomUUID().toString().replaceAll("-","")
 
         File buildFile = new File(projectDir, "build.gradle")
@@ -107,13 +118,6 @@ class TestUtil {
 
         ${buildFileAppends}
         """.stripIndent()
-
-        GradleRunner jte = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withArguments("jte")
-            .withPluginClasspath()
-
-        return shouldFail ? jte.buildAndFail() : jte.build()
     }
 
     void appendToBuildFile(String text){
