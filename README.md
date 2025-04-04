@@ -1,3 +1,5 @@
+> The Jenkins Templating Engine has been marked for adoption
+
 # Gradle JTE Plugin
 
 This gradle plugin packages a library source for the [Jenkins Templating Engine](https://github.com/jenkinsci/templating-engine-plugin) into a Jenkins Plugin.
